@@ -13,6 +13,7 @@ import {
 import { format, startOfWeek, addDays } from "date-fns";
 import { CanvasTodoItem } from "./CanvasTodoItem";
 import { WeekDayArea } from "./WeekDayArea";
+import { supabase } from "../utils/supabaseClient";
 
 export interface Todo {
   id: string;
@@ -22,29 +23,12 @@ export interface Todo {
   position: { x: number; y: number };
   dayOfWeek: string | null;
   isEditing?: boolean;
+  isInDatabase?: boolean; // Track if this todo exists in database
 }
 
 export function DragDropTodoList() {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const [todos, setTodos] = useState<Todo[]>([
-    {
-      id: "1",
-      text: "Review project proposal",
-      estimatedHours: 2,
-      completed: false,
-      position: { x: 100, y: 100 },
-      dayOfWeek: null,
-    },
-    {
-      id: "2",
-      text: "Call dentist",
-      estimatedHours: 0.5,
-      completed: false,
-      position: { x: 300, y: 150 },
-      dayOfWeek: null,
-    },
-  ]);
-
+  const [todos, setTodos] = useState<Todo[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -54,6 +38,38 @@ export function DragDropTodoList() {
       },
     })
   );
+
+  useEffect(() => {
+    async function fetchTodos() {
+      const { data, error } = await supabase
+        .from("todos")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (!error && data) {
+        // Transform database format to Todo interface format
+        const transformedTodos = data.map((todo: Record<string, unknown>) => ({
+          id: todo.id as string,
+          text: (todo.text as string) || "",
+          estimatedHours:
+            ((todo.estimatedHours || todo.estimated_hours) as number) || 1,
+          completed: (todo.completed as boolean) || false,
+          position: {
+            x: (todo.position_x as number) || 0,
+            y: (todo.position_y as number) || 0,
+          },
+          dayOfWeek: (todo.dayOfWeek as string) || null,
+          isInDatabase: true, // Mark as already in database
+        }));
+
+        // Clear existing todos and set only database todos to prevent duplicates
+        setTodos(transformedTodos);
+
+        // Snap todos to their assigned sections after loading, in case screen size changed
+        setTimeout(snapTodosToSections, 200);
+      }
+    }
+    fetchTodos();
+  }, []);
 
   // Function to snap todos to their assigned day areas
   const snapTodosToSections = () => {
@@ -84,7 +100,7 @@ export function DragDropTodoList() {
 
         // Calculate new position: left-justified within the day area with some padding
         const newX = dayRect.left - canvasRect.left + 10; // 10px padding from left
-        const newY = dayRect.top - canvasRect.top + 60 + itemsInSameDay * 35; // Stack vertically
+        const newY = dayRect.top - canvasRect.top + 80 + itemsInSameDay * 35; // Stack vertically, increased from 60 to 80
 
         return {
           ...todo,
@@ -123,27 +139,139 @@ export function DragDropTodoList() {
     };
   });
 
+  // Add todo to local state only (not database yet)
+  const addTodo = (todo: Todo) => {
+    // Check if todo with this ID already exists to prevent duplicates
+    setTodos((prev) => {
+      const existingTodo = prev.find((t) => t.id === todo.id);
+      if (existingTodo) {
+        return prev; // Don't add duplicate
+      }
+      return [...prev, todo];
+    });
+  };
+
+  // Save todo to database (called when todo is complete with title and hours)
+  const saveTodoToDatabase = async (todo: Todo) => {
+    try {
+      // Transform Todo format to database format
+      const dbTodo = {
+        id: todo.id, // Keep as string UUID
+        text: todo.text,
+        estimatedHours: todo.estimatedHours,
+        completed: todo.completed,
+        position_x: todo.position.x,
+        position_y: todo.position.y,
+        dayOfWeek: todo.dayOfWeek,
+      };
+
+      // Use upsert to prevent duplicates (insert or update if exists)
+      const { error } = await supabase
+        .from("todos")
+        .upsert([dbTodo], { onConflict: "id" });
+
+      if (error) {
+        console.error("Failed to save todo to database:", error);
+      }
+    } catch (err) {
+      console.error("Database connection error:", err);
+    }
+  };
+
+  // Update todo in Supabase
+  const updateTodo = async (id: string, updates: Partial<Todo>) => {
+    try {
+      // Transform updates to database format
+      const dbUpdates: Record<string, unknown> = {};
+
+      if (updates.text !== undefined) dbUpdates.text = updates.text;
+      if (updates.estimatedHours !== undefined)
+        dbUpdates.estimatedHours = updates.estimatedHours;
+      if (updates.completed !== undefined)
+        dbUpdates.completed = updates.completed;
+      if (updates.dayOfWeek !== undefined)
+        dbUpdates.dayOfWeek = updates.dayOfWeek;
+      if (updates.position !== undefined) {
+        dbUpdates.position_x = updates.position.x;
+        dbUpdates.position_y = updates.position.y;
+      }
+
+      const { error } = await supabase
+        .from("todos")
+        .update(dbUpdates)
+        .eq("id", id);
+
+      if (error) {
+        console.error("Failed to update todo in database:", error);
+      }
+    } catch (err) {
+      console.error("Database connection error:", err);
+    }
+  };
+
+  // Wrapper function for synchronous updates from CanvasTodoItem
+  const handleTodoUpdate = (id: string, updates: Partial<Todo>) => {
+    // Update local state immediately for UI responsiveness
+    setTodos((prev) => {
+      return prev.map((todo) => {
+        if (todo.id === id) {
+          const updatedTodo = { ...todo, ...updates };
+
+          // Check if this is a new todo that should be saved to database
+          if (
+            !todo.isInDatabase &&
+            updatedTodo.text.trim() &&
+            updatedTodo.estimatedHours > 0
+          ) {
+            // Save to database and mark as saved
+            saveTodoToDatabase({ ...updatedTodo, isInDatabase: true });
+            return { ...updatedTodo, isInDatabase: true };
+          } else if (todo.isInDatabase) {
+            // Update existing todo in database
+            updateTodo(id, updates);
+          }
+
+          return updatedTodo;
+        }
+        return todo;
+      });
+    });
+  };
+
+  // Delete todo from Supabase
+  const deleteTodo = async (id: string) => {
+    // Remove from local state immediately
+    setTodos((prev) => prev.filter((todo) => todo.id !== id));
+
+    try {
+      const { error } = await supabase.from("todos").delete().eq("id", id);
+      if (error) {
+        console.error("Failed to delete todo from database:", error);
+        // Could re-add the todo back to local state here if needed
+      }
+    } catch (err) {
+      console.error("Database connection error:", err);
+    }
+  };
+
+  // Example: handleDoubleClick now uses addTodo
   const handleDoubleClick = (event: React.MouseEvent) => {
     if (!canvasRef.current) return;
-
     const rect = canvasRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-
-    // Don't create todos if clicking on existing elements
     if ((event.target as HTMLElement).closest("[data-todo-item]")) return;
-
     const newTodo: Todo = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       text: "",
       estimatedHours: 1,
       completed: false,
       position: { x, y },
       dayOfWeek: null,
       isEditing: true,
+      isInDatabase: false, // Mark as not in database yet
     };
-
-    setTodos((todos) => [...todos, newTodo]);
+    addTodo(newTodo);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -151,37 +279,41 @@ export function DragDropTodoList() {
     // Don't modify body overflow to prevent page shifting
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, delta } = event;
 
-    // Update position based on final delta and detect day overlap
     if (delta && canvasRef.current) {
       const canvasRect = canvasRef.current.getBoundingClientRect();
 
-      const updatedTodos = todos.map((todo) => {
-        if (todo.id === active.id) {
-          const newX = Math.max(
-            0,
-            Math.min(canvasRect.width - 80, todo.position.x + delta.x)
-          );
-          const newY = Math.max(
-            0,
-            Math.min(canvasRect.height - 30, todo.position.y + delta.y)
-          );
+      const todoToUpdate = todos.find((todo) => todo.id === active.id);
+      if (!todoToUpdate) return;
 
-          // Detect which day area this position overlaps with
-          const newDayOfWeek = detectDayFromPosition(newX, newY);
+      const newX = Math.max(
+        0,
+        Math.min(canvasRect.width - 80, todoToUpdate.position.x + delta.x)
+      );
+      const newY = Math.max(
+        0,
+        Math.min(canvasRect.height - 30, todoToUpdate.position.y + delta.y)
+      );
+      const newDayOfWeek = detectDayFromPosition(newX, newY);
 
-          return {
-            ...todo,
-            position: { x: newX, y: newY },
-            dayOfWeek: newDayOfWeek,
-          };
-        }
-        return todo;
+      const updatedTodo = {
+        ...todoToUpdate,
+        position: { x: newX, y: newY },
+        dayOfWeek: newDayOfWeek,
+      };
+
+      // Update local state
+      setTodos((prev) =>
+        prev.map((todo) => (todo.id === active.id ? updatedTodo : todo))
+      );
+
+      // Update in Supabase
+      await updateTodo(updatedTodo.id, {
+        position: updatedTodo.position,
+        dayOfWeek: updatedTodo.dayOfWeek,
       });
-
-      setTodos(updatedTodos);
     }
 
     setActiveId(null);
@@ -222,16 +354,6 @@ export function DragDropTodoList() {
     }
 
     return null;
-  };
-
-  const updateTodo = (id: string, updates: Partial<Todo>) => {
-    setTodos((todos) =>
-      todos.map((todo) => (todo.id === id ? { ...todo, ...updates } : todo))
-    );
-  };
-
-  const deleteTodo = (id: string) => {
-    setTodos((todos) => todos.filter((todo) => todo.id !== id));
   };
 
   const activeTodo = todos.find((todo) => todo.id === activeId);
@@ -298,7 +420,7 @@ export function DragDropTodoList() {
             <CanvasTodoItem
               key={todo.id}
               todo={todo}
-              onUpdate={updateTodo}
+              onUpdate={handleTodoUpdate}
               onDelete={deleteTodo}
               isDragging={activeId === todo.id}
             />

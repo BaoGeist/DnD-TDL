@@ -1,36 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DnD-TDL: Drag & Drop Todo List
+
+A modern, responsive weekly todo planner with advanced drag-and-drop functionality. Plan your week with pixel-perfect positioning and intelligent window resize handling.
+
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
+![React](https://img.shields.io/badge/React-19-blue?style=flat-square&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38bdf8?style=flat-square&logo=tailwind-css)
+
+## Features
+
+### Interactive Canvas Interface
+- Free-form positioning anywhere on screen
+- Double-click to create new todos instantly
+- Visual drag-and-drop with real-time feedback
+- Automatic positioning on window resize
+
+### Weekly Planning Layout
+- Responsive 7-day grid (Monday-Sunday)
+- Current week display with proper dates
+- Special sections for incomplete tasks and backlog
+- Adaptive layout for desktop and mobile
+
+### Todo Management
+- Inline editing for text and estimated hours
+- Click to toggle completion status
+- Time tracking with hour estimation
+- Automatic cleanup of empty todos
+- Full keyboard navigation support
+
+### Drag & Drop System
+- Multi-section support between all day areas
+- Automatic day detection on drop
+- Flexible positioning within sections
+- Visual feedback during drag operations
+- Smooth animations and transitions
+
+### Responsive Design
+- Touch support for mobile devices
+- Smart window resize handling
+- Clean, minimal UI with Tailwind CSS
+- Accessibility features and keyboard navigation
+- Optimized performance with React 19 and Next.js 15
+
+### Analytics
+- Time tracking per day section
+- Completion statistics
+- Visual states for different todo types
+- Real-time state synchronization
+
+## Tech Stack
+
+- **[Next.js 15](https://nextjs.org/)** - React framework with Turbopack
+- **[React 19](https://react.dev/)** - Latest React with concurrent features
+- **[TypeScript](https://www.typescriptlang.org/)** - Type safety and developer experience
+- **[Tailwind CSS 4](https://tailwindcss.com/)** - Utility-first CSS framework
+- **[@dnd-kit](https://dndkit.com/)** - Drag-and-drop functionality
+- **[date-fns](https://date-fns.org/)** - Date manipulation library
+- **[Lucide React](https://lucide.dev/)** - Icon library
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- npm, yarn, pnpm, or bun
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Installation
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/BaoGeist/DnD-TDL.git
+   cd DnD-TDL
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-## Learn More
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To learn more about Next.js, take a look at the following resources:
+## Usage
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Create todos**: Double-click anywhere on the canvas
+- **Edit todos**: Double-click to edit text, single-click to toggle completion
+- **Schedule tasks**: Drag todos between day sections
+- **Time estimation**: Use Tab key while editing to set hours
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Next Steps
 
-## Deploy on Vercel
+### Cross-Device Synchronization
+- Real-time sync across all devices
+- Offline support with PWA capabilities
+- Conflict resolution for simultaneous edits
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### User Authentication
+- Multiple authentication providers (Google, GitHub, Email)
+- User profiles and preferences
+- Data privacy with encryption
+- Multi-workspace support
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Enhanced Features
+- Weekly and monthly productivity reports
+- Advanced time tracking and analytics
+- Themes and customization options
+- Calendar integration (Google Calendar, Outlook)
+- Third-party app connections
+- Export capabilities and API access
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [Next.js](https://nextjs.org/) by Vercel
+- Drag-and-drop powered by [@dnd-kit](https://dndkit.com/)
+- Icons by [Lucide](https://lucide.dev/)
+- Font: [Geist](https://vercel.com/font) by Vercel
