@@ -12,6 +12,16 @@ interface CanvasTodoItemProps {
   isOverlay?: boolean;
 }
 
+// Helper function to check if todo is in an assigned section (incomplete section or day of week)
+const isInAssignedSection = (todo: Todo): boolean => {
+  // If it has a dayOfWeek, it's definitely assigned
+  if (todo.dayOfWeek) return true;
+
+  // Check if positioned in incomplete section by checking if Y position suggests it's in a day area
+  // Tasks in day areas typically have Y > 50 (below headers)
+  return todo.position.y > 50;
+};
+
 export function CanvasTodoItem({
   todo,
   onUpdate,
@@ -122,7 +132,7 @@ export function CanvasTodoItem({
         ${
           todo.completed
             ? "bg-green-100 text-green-800 line-through"
-            : todo.dayOfWeek
+            : isInAssignedSection(todo)
             ? "bg-blue-100 text-blue-800"
             : "bg-white text-gray-900"
         }
@@ -141,7 +151,7 @@ export function CanvasTodoItem({
           onBlur={handleTextSubmit}
           onKeyDown={handleTextKeyDown}
           onClick={(e) => e.stopPropagation()}
-          className="bg-transparent border-none outline-none min-w-[80px] max-w-[160px] text-xs"
+          className="bg-transparent border-none outline-none w-[160px] text-xs"
           placeholder="Enter task..."
         />
       ) : isEditingHours ? (
@@ -174,7 +184,7 @@ export function CanvasTodoItem({
               handleToggleComplete();
             }
           }}
-          className="min-w-[80px] max-w-[160px] truncate text-xs"
+          className="w-[160px] truncate text-xs"
         >
           {todo.text || "Click to add task..."} ({todo.estimatedHours}h)
         </div>

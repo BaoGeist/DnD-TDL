@@ -98,9 +98,75 @@ export function DragDropTodoList() {
           .slice(0, index)
           .filter((t) => t.dayOfWeek === todo.dayOfWeek).length;
 
-        // Calculate new position: left-justified within the day area with some padding
-        const newX = dayRect.left - canvasRect.left + 10; // 10px padding from left
-        const newY = dayRect.top - canvasRect.top + 80 + itemsInSameDay * 35; // Stack vertically, increased from 60 to 80
+        // Multi-column layout calculations
+        const taskHeight = 35; // Vertical spacing between tasks
+        const headerHeight = 90; // Space reserved for day header (increased from 80)
+        const bottomPadding = 5; // Space at bottom of container (reduced from 20)
+        const columnWidth = 170; // Width for each column (accommodates max task width + padding)
+        const columnSpacing = 20; // Space between columns
+        const leftPadding = 10; // Initial left padding
+
+        // Calculate available height for tasks
+        const availableHeight = dayRect.height - headerHeight - bottomPadding;
+        const tasksPerColumn = Math.max(
+          1,
+          Math.floor(availableHeight / taskHeight)
+        ); // Ensure at least 1 task per column
+
+        // Calculate max columns that fit in container width
+        const availableWidth = dayRect.width - leftPadding * 2;
+        const maxColumns = Math.floor(
+          availableWidth / (columnWidth + columnSpacing)
+        );
+
+        // Determine which column this task belongs to
+        let columnIndex = Math.floor(itemsInSameDay / tasksPerColumn);
+        let taskIndexInColumn = itemsInSameDay % tasksPerColumn;
+
+        // Fallback handling for extreme cases (too many columns)
+        if (columnIndex >= maxColumns) {
+          // If we exceed max columns, compress into available columns and reduce task height
+          const totalTasks = currentTodos.filter(
+            (t) => t.dayOfWeek === todo.dayOfWeek
+          ).length;
+          const adjustedTasksPerColumn = Math.ceil(totalTasks / maxColumns);
+          const adjustedTaskHeight = Math.min(
+            taskHeight,
+            availableHeight / adjustedTasksPerColumn
+          );
+
+          columnIndex = Math.floor(itemsInSameDay / adjustedTasksPerColumn);
+          taskIndexInColumn = itemsInSameDay % adjustedTasksPerColumn;
+
+          // Recalculate position with adjusted values
+          const newX =
+            dayRect.left -
+            canvasRect.left +
+            leftPadding +
+            columnIndex * (columnWidth + columnSpacing);
+          const newY =
+            dayRect.top -
+            canvasRect.top +
+            headerHeight +
+            taskIndexInColumn * adjustedTaskHeight;
+
+          return {
+            ...todo,
+            position: { x: newX, y: newY },
+          };
+        }
+
+        // Calculate position for normal case
+        const newX =
+          dayRect.left -
+          canvasRect.left +
+          leftPadding +
+          columnIndex * (columnWidth + columnSpacing);
+        const newY =
+          dayRect.top -
+          canvasRect.top +
+          headerHeight +
+          taskIndexInColumn * taskHeight;
 
         return {
           ...todo,

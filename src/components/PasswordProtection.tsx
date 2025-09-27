@@ -15,7 +15,7 @@ export function PasswordProtection({ children }: PasswordProtectionProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password === correctPassword) {
       setIsAuthenticated(true);
       setError("");
@@ -43,8 +43,8 @@ export function PasswordProtection({ children }: PasswordProtectionProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label 
-              htmlFor="password" 
+            <label
+              htmlFor="password"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
               Password
@@ -61,9 +61,7 @@ export function PasswordProtection({ children }: PasswordProtectionProps) {
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm text-center">
-              {error}
-            </div>
+            <div className="text-red-600 text-sm text-center">{error}</div>
           )}
 
           <button
