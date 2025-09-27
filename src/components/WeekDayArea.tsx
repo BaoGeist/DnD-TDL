@@ -8,9 +8,10 @@ interface WeekDayAreaProps {
   name: string;
   date: string;
   todos: Todo[];
+  isToday?: boolean;
 }
 
-export function WeekDayArea({ id, name, date, todos }: WeekDayAreaProps) {
+export function WeekDayArea({ id, name, date, todos, isToday = false }: WeekDayAreaProps) {
   const { isOver, setNodeRef } = useDroppable({
     id,
   });
@@ -28,14 +29,16 @@ export function WeekDayArea({ id, name, date, todos }: WeekDayAreaProps) {
       ref={setNodeRef}
       data-day-area={id}
       className={`
-        border-2 border-gray-300 rounded-lg p-4 h-full transition-all duration-200
-        ${isOver ? "border-blue-400 bg-blue-50" : "bg-white"}
+        border-2 rounded-lg p-4 h-full transition-all duration-200
+        ${isOver ? "border-blue-400 bg-blue-50" : "bg-white border-gray-300"}
         hover:border-gray-400
       `}
     >
       <div className="mb-3">
         <div className="flex flex-row justify-between items-baseline">
-          <h3 className="font-semibold text-lg text-gray-800">{name}</h3>
+          <h3 className={`font-semibold text-lg ${isToday ? "text-blue-600" : "text-gray-800"}`}>
+            {name}
+          </h3>
           <p className="text-sm text-gray-500">{date}</p>
         </div>
 

@@ -10,6 +10,7 @@ interface CanvasTodoItemProps {
   onDelete: (id: string) => void;
   isDragging?: boolean;
   isOverlay?: boolean;
+  isAnimating?: boolean;
 }
 
 // Helper function to check if todo is in an assigned section (incomplete section or day of week)
@@ -28,6 +29,7 @@ export function CanvasTodoItem({
   onDelete,
   isDragging = false,
   isOverlay = false,
+  isAnimating = false,
 }: CanvasTodoItemProps) {
   const [isEditingText, setIsEditingText] = useState(todo.isEditing || false);
   const [isEditingHours, setIsEditingHours] = useState(false);
@@ -125,10 +127,12 @@ export function CanvasTodoItem({
       ref={setNodeRef}
       style={style}
       data-todo-item
+      title={`${todo.text} (${todo.estimatedHours}h)`}
       className={`
         inline-block px-2 py-1 rounded shadow-sm cursor-pointer select-none text-xs
         ${isDraggedItem ? "opacity-0" : "opacity-100"}
         ${isDragging ? "shadow-lg z-50" : ""}
+        ${isAnimating ? "animate-bounce" : ""}
         ${
           todo.completed
             ? "bg-green-100 text-green-800 line-through"
