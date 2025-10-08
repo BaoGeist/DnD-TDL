@@ -3,12 +3,8 @@
 import { useState, useEffect } from "react";
 import {
   format,
-  startOfDay,
-  endOfDay,
   eachDayOfInterval,
   subDays,
-  startOfWeek,
-  addDays,
 } from "date-fns";
 import { X, Plus, Pencil, Check, Trash2 } from "lucide-react";
 import { supabase } from "../utils/supabaseClient";
@@ -148,29 +144,6 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
       default:
         return null;
     }
-  };
-
-  const renderChanges = (
-    changes: Record<string, { old: unknown; new: unknown }> | null
-  ) => {
-    if (!changes) return null;
-
-    return (
-      <div className="mt-2 text-xs text-gray-600 space-y-1">
-        {Object.entries(changes).map(
-          ([field, { old: oldVal, new: newVal }]) => (
-            <div key={field} className="flex items-center gap-2">
-              <span className="font-medium capitalize">{field}:</span>
-              <span className="text-gray-500 line-through">
-                {String(oldVal)}
-              </span>
-              <span>→</span>
-              <span className="text-gray-900">{String(newVal)}</span>
-            </div>
-          )
-        )}
-      </div>
-    );
   };
 
   const renderChronologicalView = () => {
@@ -334,8 +307,16 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
     }
 
     // Group by weeks for display
-    const weeks: (typeof heatmapData)[][] = [];
-    let currentWeek: typeof heatmapData = [];
+    type HeatmapDay = {
+      date: string;
+      count: number;
+      createdCount: number;
+      completedCount: number;
+      day: string;
+      dayOfMonth: string;
+    };
+    const weeks: HeatmapDay[][] = [];
+    let currentWeek: HeatmapDay[] = [];
 
     heatmapData.forEach((day, index) => {
       const date = new Date(day.date);
