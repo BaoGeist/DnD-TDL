@@ -17,16 +17,23 @@ import {
   AlignJustify,
   Calendar,
   Dice3,
+  History,
 } from "lucide-react";
 import { CanvasTodoItem } from "./CanvasTodoItem";
 import { WeekDayArea } from "./WeekDayArea";
+import { HistoryModal } from "./HistoryModal";
 import { supabase } from "../utils/supabaseClient";
+import {
+  logTodoCreated,
+  logTodoUpdated,
+  logTodoDeleted,
+} from "../utils/historyLogger";
 
 export interface Todo {
   id: string;
   text: string;
   estimatedHours: number;
-  completed: boolean;
+  status: 'active' | 'completed' | 'deleted';
   position: { x: number; y: number };
   scheduledDate: Date | null; // Replaced dayOfWeek with specific date
   dayOfWeek?: string | null; // Keep for backward compatibility during migration
@@ -45,6 +52,7 @@ export function DragDropTodoList() {
     return startOfWeek(today, { weekStartsOn: 1 });
   });
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -59,6 +67,7 @@ export function DragDropTodoList() {
       const { data, error } = await supabase
         .from("todos")
         .select("*")
+        .neq("status", "deleted") // Exclude deleted todos
         .order("created_at", { ascending: true });
       if (!error && data) {
         // Transform database format to Todo interface format
@@ -76,7 +85,7 @@ export function DragDropTodoList() {
             text: (todo.text as string) || "",
             estimatedHours:
               ((todo.estimatedHours || todo.estimated_hours) as number) || 1,
-            completed: (todo.completed as boolean) || false,
+            status: (todo.status as 'active' | 'completed' | 'deleted') || 'active',
             position: {
               x: (todo.position_x as number) || 0,
               y: (todo.position_y as number) || 0,
@@ -351,7 +360,7 @@ export function DragDropTodoList() {
       id: crypto.randomUUID(),
       text: "",
       estimatedHours: 1,
-      completed: false,
+      status: 'active',
       position: { x, y },
       scheduledDate,
       dayOfWeek,
@@ -426,7 +435,7 @@ export function DragDropTodoList() {
       (todo) =>
         todo.scheduledDate &&
         isSameDay(todo.scheduledDate, today) &&
-        !todo.completed
+        todo.status !== 'completed'
     );
 
     if (todayTasks.length === 0) {
@@ -435,7 +444,7 @@ export function DragDropTodoList() {
         (todo) =>
           todo.scheduledDate &&
           isDateInCurrentWeek(todo.scheduledDate) &&
-          !todo.completed
+          todo.status !== 'completed'
       );
 
       if (currentWeekTasks.length === 0) return; // No tasks to pick
@@ -479,7 +488,7 @@ export function DragDropTodoList() {
         id: todo.id,
         text: todo.text,
         estimatedHours: todo.estimatedHours,
-        completed: todo.completed,
+        status: todo.status,
         position_x: todo.position.x,
         position_y: todo.position.y,
         dayOfWeek: todo.dayOfWeek || null,
@@ -498,6 +507,8 @@ export function DragDropTodoList() {
         console.error("Error details:", JSON.stringify(error, null, 2));
       } else {
         console.log("Successfully saved todo:", data);
+        // Log creation event
+        await logTodoCreated(todo);
       }
     } catch (err) {
       console.error("Database connection error:", err);
@@ -515,8 +526,8 @@ export function DragDropTodoList() {
       if (updates.text !== undefined) dbUpdates.text = updates.text;
       if (updates.estimatedHours !== undefined)
         dbUpdates.estimatedHours = updates.estimatedHours;
-      if (updates.completed !== undefined)
-        dbUpdates.completed = updates.completed;
+      if (updates.status !== undefined)
+        dbUpdates.status = updates.status;
       if (updates.dayOfWeek !== undefined)
         dbUpdates.dayOfWeek = updates.dayOfWeek || null;
       if (updates.position !== undefined) {
@@ -551,6 +562,7 @@ export function DragDropTodoList() {
     setTodos((prev) => {
       return prev.map((todo) => {
         if (todo.id === id) {
+          const oldTodo = { ...todo };
           const updatedTodo = { ...todo, ...updates };
 
           // Check if this is a new todo that should be saved to database
@@ -565,6 +577,8 @@ export function DragDropTodoList() {
           } else if (todo.isInDatabase) {
             // Update existing todo in database
             updateTodo(id, updates);
+            // Log history for significant changes
+            logTodoUpdated(id, oldTodo, updatedTodo);
           }
 
           return updatedTodo;
@@ -574,16 +588,26 @@ export function DragDropTodoList() {
     });
   };
 
-  // Delete todo from Supabase
+  // Delete todo (soft delete - set status to 'deleted')
   const deleteTodo = async (id: string) => {
+    // Get the todo before removing it for history logging
+    const todoToDelete = todos.find((t) => t.id === id);
+
     // Remove from local state immediately
     setTodos((prev) => prev.filter((todo) => todo.id !== id));
 
     try {
-      const { error } = await supabase.from("todos").delete().eq("id", id);
+      // Soft delete: update status to 'deleted' instead of actually deleting
+      const { error } = await supabase
+        .from("todos")
+        .update({ status: 'deleted' })
+        .eq("id", id);
       if (error) {
         console.error("Failed to delete todo from database:", error);
         // Could re-add the todo back to local state here if needed
+      } else if (todoToDelete) {
+        // Log deletion event
+        await logTodoDeleted(todoToDelete);
       }
     } catch (err) {
       console.error("Database connection error:", err);
@@ -615,7 +639,7 @@ export function DragDropTodoList() {
       id: crypto.randomUUID(),
       text: "",
       estimatedHours: 1,
-      completed: false,
+      status: 'active',
       position: { x, y },
       scheduledDate,
       dayOfWeek, // Keep for backward compatibility
@@ -838,6 +862,28 @@ export function DragDropTodoList() {
             >
               <Dice3 className="w-4 h-4 pointer-events-none" />
             </button>
+
+            <div className="w-px h-4 bg-gray-300 mx-1"></div>
+
+            <button
+              onClick={() => setIsHistoryModalOpen(true)}
+              className="p-1 hover:bg-gray-100 rounded-md transition-colors z-50 relative"
+              title="View History"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            >
+              <History className="w-4 h-4 pointer-events-none" />
+            </button>
           </div>
         </div>
       </div>
@@ -939,6 +985,12 @@ export function DragDropTodoList() {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {/* History Modal */}
+      <HistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+      />
     </div>
   );
 }

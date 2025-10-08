@@ -119,7 +119,7 @@ export function CanvasTodoItem({
   };
 
   const handleToggleComplete = () => {
-    onUpdate(todo.id, { completed: !todo.completed });
+    onUpdate(todo.id, { status: todo.status === 'completed' ? 'active' : 'completed' });
   };
 
   return (
@@ -134,7 +134,7 @@ export function CanvasTodoItem({
         ${isDragging ? "shadow-lg z-50" : ""}
         ${isAnimating ? "animate-bounce" : ""}
         ${
-          todo.completed
+          todo.status === 'completed'
             ? "bg-green-100 text-green-800 line-through"
             : isInAssignedSection(todo)
             ? "bg-blue-100 text-blue-800"

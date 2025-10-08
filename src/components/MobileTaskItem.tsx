@@ -66,14 +66,14 @@ export function MobileTaskItem({
         >
           <div
             className={`text-sm truncate ${
-              todo.completed ? "line-through text-gray-500" : "text-gray-900"
+              todo.status === 'completed' ? "line-through text-gray-500" : "text-gray-900"
             }`}
           >
             {todo.text || "Untitled task"}
           </div>
           <span
             className={`text-xs text-gray-500 ml-2 flex-shrink-0 ${
-              todo.completed ? "line-through text-gray-500" : "text-gray-900"
+              todo.status === 'completed' ? "line-through text-gray-500" : "text-gray-900"
             }`}
           >
             {todo.estimatedHours}h
@@ -88,7 +88,7 @@ export function MobileTaskItem({
           }}
           className="flex-shrink-0 w-6 h-6 rounded border-2 border-gray-300 flex items-center justify-center"
         >
-          {todo.completed && (
+          {todo.status === 'completed' && (
             <svg
               className="w-4 h-4 text-green-600"
               fill="currentColor"

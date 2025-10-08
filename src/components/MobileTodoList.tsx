@@ -25,6 +25,7 @@ export function MobileTodoList() {
       const { data, error } = await supabase
         .from("todos")
         .select("*")
+        .neq("status", "deleted")
         .order("created_at", { ascending: true });
 
       if (!error && data) {
@@ -41,7 +42,7 @@ export function MobileTodoList() {
             text: (todo.text as string) || "",
             estimatedHours:
               ((todo.estimatedHours || todo.estimated_hours) as number) || 1,
-            completed: (todo.completed as boolean) || false,
+            status: (todo.status as 'active' | 'completed' | 'deleted') || 'active',
             position: {
               x: (todo.position_x as number) || 0,
               y: (todo.position_y as number) || 0,
@@ -91,7 +92,7 @@ export function MobileTodoList() {
 
   const getTotalHoursForDay = (tasks: Todo[]): number => {
     return tasks
-      .filter((todo) => !todo.completed)
+      .filter((todo) => todo.status !== 'completed')
       .reduce((sum, todo) => sum + todo.estimatedHours, 0);
   };
 
@@ -110,7 +111,7 @@ export function MobileTodoList() {
       (todo) =>
         todo.scheduledDate &&
         isSameDay(todo.scheduledDate, today) &&
-        !todo.completed
+        todo.status !== 'completed'
     );
 
     if (todayTasks.length > 0) {
@@ -140,18 +141,18 @@ export function MobileTodoList() {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
 
-    const newCompleted = !todo.completed;
+    const newStatus = todo.status === 'completed' ? 'active' : 'completed';
 
     // Update local state
     setTodos((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: newCompleted } : t))
+      prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t))
     );
 
     // Update database
     try {
       await supabase
         .from("todos")
-        .update({ completed: newCompleted })
+        .update({ status: newStatus })
         .eq("id", id);
     } catch (err) {
       console.error("Failed to update todo:", err);
@@ -162,9 +163,9 @@ export function MobileTodoList() {
     // Remove from local state
     setTodos((prev) => prev.filter((t) => t.id !== id));
 
-    // Delete from database
+    // Soft delete in database (set status to 'deleted')
     try {
-      await supabase.from("todos").delete().eq("id", id);
+      await supabase.from("todos").update({ status: 'deleted' }).eq("id", id);
     } catch (err) {
       console.error("Failed to delete todo:", err);
     }
@@ -215,7 +216,7 @@ export function MobileTodoList() {
         id: crypto.randomUUID(),
         text: taskData.text,
         estimatedHours: taskData.estimatedHours,
-        completed: false,
+        status: 'active',
         position: { x: 0, y: 0 },
         scheduledDate: taskData.scheduledDate,
         dayOfWeek: taskData.dayOfWeek,
@@ -231,7 +232,7 @@ export function MobileTodoList() {
             id: newTodo.id,
             text: newTodo.text,
             estimatedHours: newTodo.estimatedHours,
-            completed: newTodo.completed,
+            status: newTodo.status,
             position_x: newTodo.position.x,
             position_y: newTodo.position.y,
             scheduleddate: newTodo.scheduledDate?.toISOString() || null,

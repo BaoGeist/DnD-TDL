@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <PasswordProtection>
       {/* Desktop view - shown on screens >= 640px */}
-      <div className="hidden sm:block min-h-screen bg-gray-50 py-8">
+      <div className="hidden sm:block min-h-screen bg-gray-50 py-4">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <DragDropTodoList />
         </div>

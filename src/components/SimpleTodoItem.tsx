@@ -27,7 +27,7 @@ export function SimpleTodoItem({
     : undefined;
 
   const handleToggleComplete = () => {
-    onUpdate(todo.id, { completed: !todo.completed });
+    onUpdate(todo.id, { status: todo.status === 'completed' ? 'active' : 'completed' });
   };
 
   return (
@@ -37,7 +37,7 @@ export function SimpleTodoItem({
       className={`
         group flex items-center justify-between p-2 rounded border cursor-pointer
         ${
-          todo.completed
+          todo.status === 'completed'
             ? "bg-green-50 border-green-200 text-green-800"
             : "bg-gray-50 border-gray-200 text-gray-900"
         }
@@ -54,7 +54,7 @@ export function SimpleTodoItem({
       >
         <div
           className={`text-sm font-medium ${
-            todo.completed ? "line-through" : ""
+            todo.status === 'completed' ? "line-through" : ""
           }`}
         >
           {todo.text || "Untitled task"}
