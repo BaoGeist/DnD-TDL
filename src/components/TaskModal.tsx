@@ -117,33 +117,45 @@ export function TaskModal({
       onClick={handleBackdropClick}
     >
       {/* Bottom sheet */}
-      <div className="bg-white rounded-t-2xl w-full max-w-lg animate-slide-up">
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">
-              {todo ? "Edit Task" : "Create Task"}
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
+      <div
+        className="bg-white rounded-t-2xl w-full max-w-lg max-h-[85vh] flex flex-col animate-slide-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Drag handle */}
+        <div
+          className="pt-3 pb-2 flex justify-center cursor-pointer"
+          onClick={onClose}
+        >
+          <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+        </div>
 
+        {/* Header */}
+        <div className="flex-shrink-0 px-6 pt-2 pb-4 flex items-center justify-between border-b border-gray-200">
+          <h2 className="text-xl font-semibold">
+            {todo ? "Edit Task" : "Create Task"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
           {/* Task Name */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -227,8 +239,10 @@ export function TaskModal({
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Save Button */}
+        {/* Fixed Footer with Save Button */}
+        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-white rounded-b-2xl">
           <button
             onClick={handleSave}
             disabled={!taskName.trim()}
