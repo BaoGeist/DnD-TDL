@@ -11,17 +11,25 @@ interface WeekDayAreaProps {
   isToday?: boolean;
 }
 
-export function WeekDayArea({ id, name, date, todos, isToday = false }: WeekDayAreaProps) {
+export function WeekDayArea({
+  id,
+  name,
+  date,
+  todos,
+  isToday = false,
+}: WeekDayAreaProps) {
   const { isOver, setNodeRef } = useDroppable({
     id,
   });
 
   const totalHours = todos.reduce((sum, todo) => sum + todo.estimatedHours, 0);
-  const completedTodos = todos.filter((todo) => todo.completed).length;
+  const completedTodos = todos.filter(
+    (todo) => todo.status === "completed"
+  ).length;
   const remainingHours =
     totalHours -
     todos
-      .filter((todo) => todo.completed)
+      .filter((todo) => todo.status === "completed")
       .reduce((sum, todo) => sum + todo.estimatedHours, 0);
 
   return (
@@ -36,7 +44,11 @@ export function WeekDayArea({ id, name, date, todos, isToday = false }: WeekDayA
     >
       <div className="mb-3">
         <div className="flex flex-row justify-between items-baseline">
-          <h3 className={`font-semibold text-lg ${isToday ? "text-blue-600" : "text-gray-800"}`}>
+          <h3
+            className={`font-semibold text-lg ${
+              isToday ? "text-blue-600" : "text-gray-800"
+            }`}
+          >
             {name}
           </h3>
           <p className="text-sm text-gray-500">{date}</p>

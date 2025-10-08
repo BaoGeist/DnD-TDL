@@ -59,23 +59,29 @@ export function TodoItem({
           className={`
             flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center
             ${
-              todo.completed
+              todo.status === "completed"
                 ? "bg-green-500 border-green-500 text-white"
                 : "border-gray-300 hover:border-gray-400"
             }
             transition-colors
           `}
           aria-label={
-            todo.completed ? "Mark as incomplete" : "Mark as complete"
+            todo.status === "completed"
+              ? "Mark as incomplete"
+              : "Mark as complete"
           }
         >
-          {todo.completed && <Check size={12} />}
+          {todo.status === "completed" && <Check size={12} />}
         </button>
 
         <span
           className={`
             flex-1 text-xs
-            ${todo.completed ? "text-gray-500 line-through" : "text-gray-900"}
+            ${
+              todo.status === "completed"
+                ? "text-gray-500 line-through"
+                : "text-gray-900"
+            }
           `}
         >
           {todo.text}

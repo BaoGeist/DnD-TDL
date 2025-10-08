@@ -50,9 +50,10 @@ export function WeekDay({
           <span className="text-xs text-gray-500">
             {todos.length} task{todos.length !== 1 ? "s" : ""}
           </span>
-          {todos.filter((todo) => todo.completed).length > 0 && (
+          {todos.filter((todo) => todo.status === "completed").length > 0 && (
             <span className="text-xs text-green-600">
-              {todos.filter((todo) => todo.completed).length} completed
+              {todos.filter((todo) => todo.status === "completed").length}{" "}
+              completed
             </span>
           )}
         </div>

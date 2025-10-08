@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  format,
-  eachDayOfInterval,
-  subDays,
-} from "date-fns";
+import { format, eachDayOfInterval, subDays } from "date-fns";
 import { X, Plus, Pencil, Check, Trash2 } from "lucide-react";
 import { supabase } from "../utils/supabaseClient";
 
