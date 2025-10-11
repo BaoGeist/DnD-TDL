@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { format, eachDayOfInterval, subDays } from "date-fns";
 import { X, Plus, Pencil, Check, Trash2 } from "lucide-react";
 import { supabase } from "../utils/supabaseClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HistoryEvent {
   id: string;
@@ -30,6 +31,7 @@ type FilterType = "all" | "created" | "completed" | "deleted";
 type ViewType = "chronological" | "by-task" | "timeline";
 
 export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
+  const { user } = useAuth();
   const [viewType, setViewType] = useState<ViewType>("timeline");
   const [filter, setFilter] = useState<FilterType>("all");
   const [historyEvents, setHistoryEvents] = useState<HistoryEvent[]>([]);
@@ -44,11 +46,14 @@ export function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
   }, [isOpen]);
 
   const fetchHistory = async () => {
+    if (!user) return;
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from("todo_history")
         .select("*")
+        .eq("user_id", user.id)
         .order("timestamp", { ascending: false });
 
       if (!error && data) {

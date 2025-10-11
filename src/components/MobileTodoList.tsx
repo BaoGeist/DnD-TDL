@@ -7,8 +7,10 @@ import { MobileTaskItem } from "./MobileTaskItem";
 import { TaskModal } from "./TaskModal";
 import { Todo } from "./DragDropTodoList";
 import { supabase } from "../utils/supabaseClient";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function MobileTodoList() {
+  const { user } = useAuth();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
     const now = new Date();
@@ -22,9 +24,12 @@ export function MobileTodoList() {
   // Fetch todos from database
   useEffect(() => {
     async function fetchTodos() {
+      if (!user) return;
+
       const { data, error } = await supabase
         .from("todos")
         .select("*")
+        .eq("user_id", user.id)
         .neq("status", "deleted")
         .order("created_at", { ascending: true });
 
@@ -57,7 +62,7 @@ export function MobileTodoList() {
       }
     }
     fetchTodos();
-  }, []);
+  }, [user]);
 
   // Get current week days starting from Sunday
   const now = new Date();
@@ -227,6 +232,8 @@ export function MobileTodoList() {
 
       // Save to database
       try {
+        if (!user) return;
+
         await supabase.from("todos").insert([
           {
             id: newTodo.id,
@@ -237,6 +244,7 @@ export function MobileTodoList() {
             position_y: newTodo.position.y,
             scheduleddate: newTodo.scheduledDate?.toISOString() || null,
             dayOfWeek: newTodo.dayOfWeek || null,
+            user_id: user.id,
           },
         ]);
       } catch (err) {

@@ -11,8 +11,16 @@ export async function logHistoryEvent(
   changes?: Record<string, { old: unknown; new: unknown }>
 ) {
   try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('Cannot log history: no authenticated user');
+      return;
+    }
+
     const historyEntry = {
       todo_id: todoId,
+      user_id: user.id,
       event_type: eventType,
       snapshot: {
         id: snapshot.id,

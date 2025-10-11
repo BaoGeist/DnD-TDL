@@ -28,6 +28,7 @@ import {
   logTodoUpdated,
   logTodoDeleted,
 } from "../utils/historyLogger";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Todo {
   id: string;
@@ -42,6 +43,7 @@ export interface Todo {
 }
 
 export function DragDropTodoList() {
+  const { user } = useAuth();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -64,9 +66,12 @@ export function DragDropTodoList() {
 
   useEffect(() => {
     async function fetchTodos() {
+      if (!user) return;
+
       const { data, error } = await supabase
         .from("todos")
         .select("*")
+        .eq("user_id", user.id)
         .neq("status", "deleted") // Exclude deleted todos
         .order("created_at", { ascending: true });
       if (!error && data) {
@@ -104,7 +109,7 @@ export function DragDropTodoList() {
       }
     }
     fetchTodos();
-  }, [currentWeekStart]);
+  }, [currentWeekStart, user]);
 
   // Function to snap todos to their assigned day areas
   const snapTodosToSections = () => {
@@ -480,6 +485,8 @@ export function DragDropTodoList() {
 
   // Save todo to database (called when todo is complete with title and hours)
   const saveTodoToDatabase = async (todo: Todo) => {
+    if (!user) return;
+
     try {
       console.log("Saving todo to database:", todo);
 
@@ -493,6 +500,7 @@ export function DragDropTodoList() {
         position_y: todo.position.y,
         dayOfWeek: todo.dayOfWeek || null,
         scheduleddate: todo.scheduledDate?.toISOString() || null,
+        user_id: user.id,
       };
 
       console.log("Database todo object:", dbTodo);
