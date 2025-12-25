@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Repeat, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
+import { Plus, Repeat, ChevronDown, ChevronUp, Check } from "lucide-react";
 import {
   Goal,
   logGoalCreated,
@@ -226,9 +226,8 @@ export function MobileGoals() {
           .from("goals")
           .update({
             completion_count: updatedGoal.completionCount,
-            completion_dates: updatedGoal.completionDates.map((d) =>
-              d.toISOString()
-            ),
+            completion_dates:
+              updatedGoal.completionDates?.map((d) => d.toISOString()) || [],
           })
           .eq("id", id);
         await logGoalUpdated(id, goal, updatedGoal);
@@ -266,7 +265,7 @@ export function MobileGoals() {
     }
   };
 
-  const handleDeleteGoal = async (id: string) => {
+  const _handleDeleteGoal = async (id: string) => {
     const goalToDelete = goals.find((g) => g.id === id);
     setGoals((prev) => prev.filter((g) => g.id !== id));
 

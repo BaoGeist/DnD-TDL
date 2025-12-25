@@ -203,7 +203,7 @@ export function GoalsDashboard({ onViewChange }: GoalsDashboardProps = {}) {
   };
 
   // Handle edit goal
-  const handleEditGoal = (goal: Goal) => {
+  const _handleEditGoal = (goal: Goal) => {
     setEditingGoal(goal);
     setIsModalOpen(true);
   };
@@ -529,9 +529,9 @@ export function GoalsDashboard({ onViewChange }: GoalsDashboardProps = {}) {
     return (
       <div
         ref={setNodeRef}
-        className={`${className} ${
-          isOver ? "ring-2 ring-blue-400 ring-inset rounded-lg" : ""
-        }`}
+        className={`border-2 rounded-lg p-4 h-full transition-all duration-200 ${
+          isOver ? "border-blue-400 bg-blue-50" : "bg-white border-gray-300"
+        } hover:border-gray-400 ${className}`}
       >
         {children}
       </div>
@@ -539,9 +539,9 @@ export function GoalsDashboard({ onViewChange }: GoalsDashboardProps = {}) {
   };
 
   return (
-    <div className="h-screen bg-gray-50 overflow-hidden flex flex-col p-6">
+    <div className="h-screen bg-gray-50 overflow-hidden flex flex-col">
       {/* Combined Header with View Switcher and Title */}
-      <div className="bg-gray-50 flex justify-center pointer-events-none mb-6">
+      <div className="bg-gray-50 py-2 flex justify-center pointer-events-none mb-4">
         <div className="bg-white border-2 border-gray-200 rounded-lg shadow-sm pointer-events-auto">
           {/* View Switcher - Top Layer */}
           <div className="flex items-center px-2 py-2">
@@ -604,411 +604,418 @@ export function GoalsDashboard({ onViewChange }: GoalsDashboardProps = {}) {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-4 gap-6 flex-1 overflow-hidden">
-          {/* Yearly Column - Simple */}
-          <DroppableColumn id="yearly-column" className="flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Yearly</h2>
-              <button
-                onClick={() => handleCreateGoal("yearly")}
-                className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                title="Add yearly goal"
+        <div className="flex-1 px-4 sm:px-6 lg:px-8 pb-4">
+          <div className="grid grid-cols-4 gap-4 h-[calc(100vh-200px)]">
+            {/* Yearly Column - Simple */}
+            <DroppableColumn id="yearly-column" className="flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-800">Yearly</h2>
+                <button
+                  onClick={() => handleCreateGoal("yearly")}
+                  className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                  title="Add yearly goal"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+              <SortableContext
+                items={yearlyGoals.map((g) => g.id)}
+                strategy={verticalListSortingStrategy}
               >
-                <Plus className="w-5 h-5" />
-              </button>
-            </div>
-            <SortableContext
-              items={yearlyGoals.map((g) => g.id)}
-              strategy={verticalListSortingStrategy}
+                <div className="space-y-3 overflow-y-auto">
+                  {yearlyGoals.map((goal) => (
+                    <GoalCard
+                      key={goal.id}
+                      goal={goal}
+                      onUpdate={handleUpdateGoal}
+                      onDelete={handleDeleteGoal}
+                      isDragging={activeId === goal.id}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DroppableColumn>
+
+            {/* Quarterly Column - Dual Section */}
+            <DroppableColumn
+              id="quarterly-column"
+              className="flex flex-col overflow-hidden"
             >
-              <div className="space-y-3 overflow-y-auto">
-                {yearlyGoals.map((goal) => (
-                  <GoalCard
-                    key={goal.id}
-                    goal={goal}
-                    onUpdate={handleUpdateGoal}
-                    onDelete={handleDeleteGoal}
-                    isDragging={activeId === goal.id}
-                  />
-                ))}
+              <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Quarterly
+                </h2>
               </div>
-            </SortableContext>
-          </DroppableColumn>
 
-          {/* Quarterly Column - Dual Section */}
-          <DroppableColumn
-            id="quarterly-column"
-            className="flex flex-col overflow-hidden"
-          >
-            <div className="flex items-center justify-between mb-4 flex-shrink-0">
-              <h2 className="text-lg font-semibold text-gray-800">Quarterly</h2>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-4">
-              {/* Recurring Section */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Repeat className="w-4 h-4 text-blue-600" />
-                    <h3 className="font-semibold text-sm text-blue-900">
-                      Recurring
-                    </h3>
+              <div className="flex-1 overflow-y-auto space-y-4">
+                {/* Recurring Section */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Repeat className="w-4 h-4 text-blue-600" />
+                      <h3 className="font-semibold text-sm text-blue-900">
+                        Recurring
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => handleCreateGoal("quarterly")}
+                      className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                      title="Add recurring quarterly goal"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleCreateGoal("quarterly")}
-                    className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
-                    title="Add recurring quarterly goal"
+                  <SortableContext
+                    items={quarterlyRecurringGoals.map((g) => g.id)}
+                    strategy={verticalListSortingStrategy}
                   >
-                    <Plus className="w-4 h-4" />
-                  </button>
+                    <div className="space-y-2">
+                      {quarterlyRecurringGoals.map((goal) => (
+                        <GoalCard
+                          key={goal.id}
+                          goal={goal}
+                          onUpdate={handleUpdateGoal}
+                          onDelete={handleDeleteGoal}
+                          isDragging={activeId === goal.id}
+                          parentGoalText={getParentGoalText(goal.parentId)}
+                        />
+                      ))}
+                      {quarterlyRecurringGoals.length === 0 && (
+                        <p className="text-xs text-blue-600 py-2">
+                          Goals that repeat every quarter
+                        </p>
+                      )}
+                    </div>
+                  </SortableContext>
                 </div>
-                <SortableContext
-                  items={quarterlyRecurringGoals.map((g) => g.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-2">
-                    {quarterlyRecurringGoals.map((goal) => (
-                      <GoalCard
-                        key={goal.id}
-                        goal={goal}
-                        onUpdate={handleUpdateGoal}
-                        onDelete={handleDeleteGoal}
-                        isDragging={activeId === goal.id}
-                        parentGoalText={getParentGoalText(goal.parentId)}
-                      />
-                    ))}
-                    {quarterlyRecurringGoals.length === 0 && (
-                      <p className="text-xs text-blue-600 py-2">
-                        Goals that repeat every quarter
-                      </p>
-                    )}
-                  </div>
-                </SortableContext>
-              </div>
 
-              {/* Specific Periods Section */}
-              <div className="space-y-3">
-                {Object.keys(quarterlyByPeriod)
-                  .sort()
-                  .map((period) => {
-                    const isCurrentPeriod = period === currentQuarterPeriod;
-                    const isCollapsed = collapsedPeriods.has(period);
-                    const periodGoals = quarterlyByPeriod[period];
+                {/* Specific Periods Section */}
+                <div className="space-y-3">
+                  {Object.keys(quarterlyByPeriod)
+                    .sort()
+                    .map((period) => {
+                      const isCurrentPeriod = period === currentQuarterPeriod;
+                      const isCollapsed = collapsedPeriods.has(period);
+                      const periodGoals = quarterlyByPeriod[period];
 
-                    return (
-                      <div
-                        key={period}
-                        className={`border rounded-lg p-3 ${
-                          isCurrentPeriod
-                            ? "bg-green-50 border-green-300"
-                            : "bg-white border-gray-200"
-                        }`}
-                      >
+                      return (
                         <div
-                          className="flex items-center justify-between mb-2 cursor-pointer"
-                          onClick={() => togglePeriodCollapse(period)}
+                          key={period}
+                          className={`border rounded-lg p-3 ${
+                            isCurrentPeriod
+                              ? "bg-green-50 border-green-300"
+                              : "bg-white border-gray-200"
+                          }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <h3
-                              className={`font-semibold text-sm ${
-                                isCurrentPeriod
-                                  ? "text-green-900"
-                                  : "text-gray-800"
-                              }`}
-                            >
-                              {period}
-                              {isCurrentPeriod && (
-                                <span className="ml-2 text-xs bg-green-200 px-2 py-0.5 rounded">
-                                  Current
-                                </span>
-                              )}
-                            </h3>
+                          <div
+                            className="flex items-center justify-between mb-2 cursor-pointer"
+                            onClick={() => togglePeriodCollapse(period)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <h3
+                                className={`font-semibold text-sm ${
+                                  isCurrentPeriod
+                                    ? "text-green-900"
+                                    : "text-gray-800"
+                                }`}
+                              >
+                                {period}
+                                {isCurrentPeriod && (
+                                  <span className="ml-2 text-xs bg-green-200 px-2 py-0.5 rounded">
+                                    Current
+                                  </span>
+                                )}
+                              </h3>
+                            </div>
+                            {isCollapsed ? (
+                              <ChevronDown className="w-4 h-4 text-gray-500" />
+                            ) : (
+                              <ChevronUp className="w-4 h-4 text-gray-500" />
+                            )}
                           </div>
-                          {isCollapsed ? (
-                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                          ) : (
-                            <ChevronUp className="w-4 h-4 text-gray-500" />
+                          {!isCollapsed && (
+                            <SortableContext
+                              items={periodGoals.map((g) => g.id)}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <div className="space-y-2">
+                                {periodGoals.map((goal) => (
+                                  <GoalCard
+                                    key={goal.id}
+                                    goal={goal}
+                                    onUpdate={handleUpdateGoal}
+                                    onDelete={handleDeleteGoal}
+                                    isDragging={activeId === goal.id}
+                                    parentGoalText={getParentGoalText(
+                                      goal.parentId
+                                    )}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
                           )}
                         </div>
-                        {!isCollapsed && (
-                          <SortableContext
-                            items={periodGoals.map((g) => g.id)}
-                            strategy={verticalListSortingStrategy}
-                          >
-                            <div className="space-y-2">
-                              {periodGoals.map((goal) => (
-                                <GoalCard
-                                  key={goal.id}
-                                  goal={goal}
-                                  onUpdate={handleUpdateGoal}
-                                  onDelete={handleDeleteGoal}
-                                  isDragging={activeId === goal.id}
-                                  parentGoalText={getParentGoalText(
-                                    goal.parentId
-                                  )}
-                                />
-                              ))}
-                            </div>
-                          </SortableContext>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          </DroppableColumn>
-
-          {/* Monthly Column - Dual Section */}
-          <DroppableColumn
-            id="monthly-column"
-            className="flex flex-col overflow-hidden"
-          >
-            <div className="flex items-center justify-between mb-4 flex-shrink-0">
-              <h2 className="text-lg font-semibold text-gray-800">Monthly</h2>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-4">
-              {/* Recurring Section */}
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Repeat className="w-4 h-4 text-purple-600" />
-                    <h3 className="font-semibold text-sm text-purple-900">
-                      Recurring
-                    </h3>
-                  </div>
-                  <button
-                    onClick={() => handleCreateGoal("monthly")}
-                    className="p-1 text-purple-600 hover:bg-purple-100 rounded transition-colors"
-                    title="Add recurring monthly goal"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
+                      );
+                    })}
                 </div>
-                <SortableContext
-                  items={monthlyRecurringGoals.map((g) => g.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-2">
-                    {monthlyRecurringGoals.map((goal) => (
-                      <GoalCard
-                        key={goal.id}
-                        goal={goal}
-                        onUpdate={handleUpdateGoal}
-                        onDelete={handleDeleteGoal}
-                        isDragging={activeId === goal.id}
-                        parentGoalText={getParentGoalText(goal.parentId)}
-                      />
-                    ))}
-                    {monthlyRecurringGoals.length === 0 && (
-                      <p className="text-xs text-purple-600 py-2">
-                        Goals that repeat every month
-                      </p>
-                    )}
-                  </div>
-                </SortableContext>
+              </div>
+            </DroppableColumn>
+
+            {/* Monthly Column - Dual Section */}
+            <DroppableColumn
+              id="monthly-column"
+              className="flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                <h2 className="text-lg font-semibold text-gray-800">Monthly</h2>
               </div>
 
-              {/* Specific Periods Section */}
-              <div className="space-y-3">
-                {Object.keys(monthlyByPeriod)
-                  .sort()
-                  .map((period) => {
-                    const isCurrentPeriod = period === currentMonthPeriod;
-                    const isCollapsed = collapsedPeriods.has(period);
-                    const periodGoals = monthlyByPeriod[period];
+              <div className="flex-1 overflow-y-auto space-y-4">
+                {/* Recurring Section */}
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Repeat className="w-4 h-4 text-purple-600" />
+                      <h3 className="font-semibold text-sm text-purple-900">
+                        Recurring
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => handleCreateGoal("monthly")}
+                      className="p-1 text-purple-600 hover:bg-purple-100 rounded transition-colors"
+                      title="Add recurring monthly goal"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <SortableContext
+                    items={monthlyRecurringGoals.map((g) => g.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {monthlyRecurringGoals.map((goal) => (
+                        <GoalCard
+                          key={goal.id}
+                          goal={goal}
+                          onUpdate={handleUpdateGoal}
+                          onDelete={handleDeleteGoal}
+                          isDragging={activeId === goal.id}
+                          parentGoalText={getParentGoalText(goal.parentId)}
+                        />
+                      ))}
+                      {monthlyRecurringGoals.length === 0 && (
+                        <p className="text-xs text-purple-600 py-2">
+                          Goals that repeat every month
+                        </p>
+                      )}
+                    </div>
+                  </SortableContext>
+                </div>
 
-                    // Format period label - parse components to avoid timezone issues
-                    const [year, month] = period.split("-").map(Number);
-                    const periodDate = new Date(year, month - 1, 1);
-                    const periodLabel = periodDate.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                    });
+                {/* Specific Periods Section */}
+                <div className="space-y-3">
+                  {Object.keys(monthlyByPeriod)
+                    .sort()
+                    .map((period) => {
+                      const isCurrentPeriod = period === currentMonthPeriod;
+                      const isCollapsed = collapsedPeriods.has(period);
+                      const periodGoals = monthlyByPeriod[period];
 
-                    return (
-                      <div
-                        key={period}
-                        className={`border rounded-lg p-3 ${
-                          isCurrentPeriod
-                            ? "bg-green-50 border-green-300"
-                            : "bg-white border-gray-200"
-                        }`}
-                      >
+                      // Format period label - parse components to avoid timezone issues
+                      const [year, month] = period.split("-").map(Number);
+                      const periodDate = new Date(year, month - 1, 1);
+                      const periodLabel = periodDate.toLocaleDateString(
+                        "en-US",
+                        {
+                          year: "numeric",
+                          month: "long",
+                        }
+                      );
+
+                      return (
                         <div
-                          className="flex items-center justify-between mb-2 cursor-pointer"
-                          onClick={() => togglePeriodCollapse(period)}
+                          key={period}
+                          className={`border rounded-lg p-3 ${
+                            isCurrentPeriod
+                              ? "bg-green-50 border-green-300"
+                              : "bg-white border-gray-200"
+                          }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <h3
-                              className={`font-semibold text-sm ${
-                                isCurrentPeriod
-                                  ? "text-green-900"
-                                  : "text-gray-800"
-                              }`}
-                            >
-                              {periodLabel}
-                              {isCurrentPeriod && (
-                                <span className="ml-2 text-xs bg-green-200 px-2 py-0.5 rounded">
-                                  Current
-                                </span>
-                              )}
-                            </h3>
+                          <div
+                            className="flex items-center justify-between mb-2 cursor-pointer"
+                            onClick={() => togglePeriodCollapse(period)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <h3
+                                className={`font-semibold text-sm ${
+                                  isCurrentPeriod
+                                    ? "text-green-900"
+                                    : "text-gray-800"
+                                }`}
+                              >
+                                {periodLabel}
+                                {isCurrentPeriod && (
+                                  <span className="ml-2 text-xs bg-green-200 px-2 py-0.5 rounded">
+                                    Current
+                                  </span>
+                                )}
+                              </h3>
+                            </div>
+                            {isCollapsed ? (
+                              <ChevronDown className="w-4 h-4 text-gray-500" />
+                            ) : (
+                              <ChevronUp className="w-4 h-4 text-gray-500" />
+                            )}
                           </div>
-                          {isCollapsed ? (
-                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                          ) : (
-                            <ChevronUp className="w-4 h-4 text-gray-500" />
+                          {!isCollapsed && (
+                            <SortableContext
+                              items={periodGoals.map((g) => g.id)}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <div className="space-y-2">
+                                {periodGoals.map((goal) => (
+                                  <GoalCard
+                                    key={goal.id}
+                                    goal={goal}
+                                    onUpdate={handleUpdateGoal}
+                                    onDelete={handleDeleteGoal}
+                                    isDragging={activeId === goal.id}
+                                    parentGoalText={getParentGoalText(
+                                      goal.parentId
+                                    )}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
                           )}
                         </div>
-                        {!isCollapsed && (
-                          <SortableContext
-                            items={periodGoals.map((g) => g.id)}
-                            strategy={verticalListSortingStrategy}
-                          >
-                            <div className="space-y-2">
-                              {periodGoals.map((goal) => (
-                                <GoalCard
-                                  key={goal.id}
-                                  goal={goal}
-                                  onUpdate={handleUpdateGoal}
-                                  onDelete={handleDeleteGoal}
-                                  isDragging={activeId === goal.id}
-                                  parentGoalText={getParentGoalText(
-                                    goal.parentId
-                                  )}
-                                />
-                              ))}
-                            </div>
-                          </SortableContext>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          </DroppableColumn>
-
-          {/* Daily Column - Dual Section */}
-          <DroppableColumn
-            id="daily-column"
-            className="flex flex-col overflow-hidden"
-          >
-            <div className="flex items-center justify-between mb-4 flex-shrink-0">
-              <h2 className="text-lg font-semibold text-gray-800">Daily</h2>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-4">
-              {/* Recurring Section */}
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Repeat className="w-4 h-4 text-purple-600" />
-                    <h3 className="font-semibold text-sm text-purple-900">
-                      Recurring
-                    </h3>
-                  </div>
-                  <button
-                    onClick={() => handleCreateGoal("daily")}
-                    className="p-1 text-purple-600 hover:bg-purple-100 rounded transition-colors"
-                    title="Add recurring daily goal"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
+                      );
+                    })}
                 </div>
-                <SortableContext
-                  items={dailyRecurringGoals.map((g) => g.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-2">
-                    {dailyRecurringGoals.map((goal) => (
-                      <GoalCard
-                        key={goal.id}
-                        goal={goal}
-                        onUpdate={handleUpdateGoal}
-                        onDelete={handleDeleteGoal}
-                        isDragging={activeId === goal.id}
-                        parentGoalText={getParentGoalText(goal.parentId)}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
+              </div>
+            </DroppableColumn>
+
+            {/* Daily Column - Dual Section */}
+            <DroppableColumn
+              id="daily-column"
+              className="flex flex-col overflow-hidden"
+            >
+              <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                <h2 className="text-lg font-semibold text-gray-800">Daily</h2>
               </div>
 
-              {/* Specific Days Section */}
-              <div className="space-y-2">
-                {Object.entries(dailyByPeriod)
-                  .sort(([a], [b]) => b.localeCompare(a))
-                  .map(([period, periodGoals]) => {
-                    const isCurrentDay = period === currentDay;
-                    const isCollapsed = collapsedPeriods.has(period);
-                    // Parse date components directly to avoid timezone issues
-                    const [year, month, day] = period.split("-").map(Number);
-                    const periodDate = new Date(year, month - 1, day);
-                    const periodLabel = format(periodDate, "MMM d, yyyy");
+              <div className="flex-1 overflow-y-auto space-y-4">
+                {/* Recurring Section */}
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Repeat className="w-4 h-4 text-purple-600" />
+                      <h3 className="font-semibold text-sm text-purple-900">
+                        Recurring
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => handleCreateGoal("daily")}
+                      className="p-1 text-purple-600 hover:bg-purple-100 rounded transition-colors"
+                      title="Add recurring daily goal"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <SortableContext
+                    items={dailyRecurringGoals.map((g) => g.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {dailyRecurringGoals.map((goal) => (
+                        <GoalCard
+                          key={goal.id}
+                          goal={goal}
+                          onUpdate={handleUpdateGoal}
+                          onDelete={handleDeleteGoal}
+                          isDragging={activeId === goal.id}
+                          parentGoalText={getParentGoalText(goal.parentId)}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </div>
 
-                    return (
-                      <div
-                        key={period}
-                        className={`border rounded-lg p-3 ${
-                          isCurrentDay
-                            ? "bg-green-50 border-green-300"
-                            : "bg-white border-gray-200"
-                        }`}
-                      >
+                {/* Specific Days Section */}
+                <div className="space-y-2">
+                  {Object.entries(dailyByPeriod)
+                    .sort(([a], [b]) => b.localeCompare(a))
+                    .map(([period, periodGoals]) => {
+                      const isCurrentDay = period === currentDay;
+                      const isCollapsed = collapsedPeriods.has(period);
+                      // Parse date components directly to avoid timezone issues
+                      const [year, month, day] = period.split("-").map(Number);
+                      const periodDate = new Date(year, month - 1, day);
+                      const periodLabel = format(periodDate, "MMM d, yyyy");
+
+                      return (
                         <div
-                          className="flex items-center justify-between mb-2 cursor-pointer"
-                          onClick={() => togglePeriodCollapse(period)}
+                          key={period}
+                          className={`border rounded-lg p-3 ${
+                            isCurrentDay
+                              ? "bg-green-50 border-green-300"
+                              : "bg-white border-gray-200"
+                          }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <h3
-                              className={`font-semibold text-sm ${
-                                isCurrentDay
-                                  ? "text-green-900"
-                                  : "text-gray-800"
-                              }`}
-                            >
-                              {periodLabel}
-                              {isCurrentDay && (
-                                <span className="ml-2 text-xs bg-green-200 px-2 py-0.5 rounded">
-                                  Today
-                                </span>
-                              )}
-                            </h3>
+                          <div
+                            className="flex items-center justify-between mb-2 cursor-pointer"
+                            onClick={() => togglePeriodCollapse(period)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <h3
+                                className={`font-semibold text-sm ${
+                                  isCurrentDay
+                                    ? "text-green-900"
+                                    : "text-gray-800"
+                                }`}
+                              >
+                                {periodLabel}
+                                {isCurrentDay && (
+                                  <span className="ml-2 text-xs bg-green-200 px-2 py-0.5 rounded">
+                                    Today
+                                  </span>
+                                )}
+                              </h3>
+                            </div>
+                            {isCollapsed ? (
+                              <ChevronDown className="w-4 h-4 text-gray-500" />
+                            ) : (
+                              <ChevronUp className="w-4 h-4 text-gray-500" />
+                            )}
                           </div>
-                          {isCollapsed ? (
-                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                          ) : (
-                            <ChevronUp className="w-4 h-4 text-gray-500" />
+                          {!isCollapsed && (
+                            <SortableContext
+                              items={periodGoals.map((g) => g.id)}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <div className="space-y-2">
+                                {periodGoals.map((goal) => (
+                                  <GoalCard
+                                    key={goal.id}
+                                    goal={goal}
+                                    onUpdate={handleUpdateGoal}
+                                    onDelete={handleDeleteGoal}
+                                    isDragging={activeId === goal.id}
+                                    parentGoalText={getParentGoalText(
+                                      goal.parentId
+                                    )}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
                           )}
                         </div>
-                        {!isCollapsed && (
-                          <SortableContext
-                            items={periodGoals.map((g) => g.id)}
-                            strategy={verticalListSortingStrategy}
-                          >
-                            <div className="space-y-2">
-                              {periodGoals.map((goal) => (
-                                <GoalCard
-                                  key={goal.id}
-                                  goal={goal}
-                                  onUpdate={handleUpdateGoal}
-                                  onDelete={handleDeleteGoal}
-                                  isDragging={activeId === goal.id}
-                                  parentGoalText={getParentGoalText(
-                                    goal.parentId
-                                  )}
-                                />
-                              ))}
-                            </div>
-                          </SortableContext>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                </div>
               </div>
-            </div>
-          </DroppableColumn>
+            </DroppableColumn>
+          </div>
         </div>
 
         <DragOverlay>
