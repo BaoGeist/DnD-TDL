@@ -1,13 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { DragDropTodoList } from "@/components/DragDropTodoList";
 import { MobileTodoList } from "@/components/MobileTodoList";
+import { GoalsDashboard } from "@/components/GoalsDashboard";
+import { MobileGoals } from "@/components/MobileGoals";
 import { AuthPage } from "@/components/AuthPage";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogOut } from "lucide-react";
 
+type View = "todos" | "goals";
+
 export default function Home() {
   const { user, loading, signOut } = useAuth();
+  const [activeView, setActiveView] = useState<View>("todos");
 
   if (loading) {
     return (
@@ -46,13 +52,17 @@ export default function Home() {
       {/* Desktop view - shown on screens >= 640px */}
       <div className="hidden sm:block min-h-screen bg-gray-50 py-4">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-          <DragDropTodoList />
+          {activeView === "todos" ? (
+            <DragDropTodoList onViewChange={setActiveView} />
+          ) : (
+            <GoalsDashboard onViewChange={setActiveView} />
+          )}
         </div>
       </div>
 
       {/* Mobile view - shown on screens < 640px */}
       <div className="block sm:hidden">
-        <MobileTodoList />
+        {activeView === "todos" ? <MobileTodoList /> : <MobileGoals />}
       </div>
     </>
   );

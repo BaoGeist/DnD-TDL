@@ -18,6 +18,7 @@ import {
   Calendar,
   Dice3,
   History,
+  Target,
 } from "lucide-react";
 import { CanvasTodoItem } from "./CanvasTodoItem";
 import { WeekDayArea } from "./WeekDayArea";
@@ -34,7 +35,7 @@ export interface Todo {
   id: string;
   text: string;
   estimatedHours: number;
-  status: 'active' | 'completed' | 'deleted';
+  status: "active" | "completed" | "deleted";
   position: { x: number; y: number };
   scheduledDate: Date | null; // Replaced dayOfWeek with specific date
   dayOfWeek?: string | null; // Keep for backward compatibility during migration
@@ -42,7 +43,11 @@ export interface Todo {
   isInDatabase?: boolean; // Track if this todo exists in database
 }
 
-export function DragDropTodoList() {
+interface DragDropTodoListProps {
+  onViewChange?: (view: "todos" | "goals") => void;
+}
+
+export function DragDropTodoList({ onViewChange }: DragDropTodoListProps = {}) {
   const { user } = useAuth();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -53,7 +58,10 @@ export function DragDropTodoList() {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     return startOfWeek(today, { weekStartsOn: 1 });
   });
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   const sensors = useSensors(
@@ -90,7 +98,8 @@ export function DragDropTodoList() {
             text: (todo.text as string) || "",
             estimatedHours:
               ((todo.estimatedHours || todo.estimated_hours) as number) || 1,
-            status: (todo.status as 'active' | 'completed' | 'deleted') || 'active',
+            status:
+              (todo.status as "active" | "completed" | "deleted") || "active",
             position: {
               x: (todo.position_x as number) || 0,
               y: (todo.position_y as number) || 0,
@@ -278,8 +287,12 @@ export function DragDropTodoList() {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Helper function to check if any todo is currently being edited
       const isAnyTodoBeingEdited = (): boolean => {
-        return todos.some(todo => todo.isEditing) ||
-               document.querySelector('input[type="text"]:focus, input[type="number"]:focus') !== null;
+        return (
+          todos.some((todo) => todo.isEditing) ||
+          document.querySelector(
+            'input[type="text"]:focus, input[type="number"]:focus'
+          ) !== null
+        );
       };
 
       // Ignore keyboard shortcuts if any todo is being edited
@@ -289,32 +302,33 @@ export function DragDropTodoList() {
 
       // Ignore if user is typing in any input field
       const activeElement = document.activeElement;
-      if (activeElement && (
-        activeElement.tagName === 'INPUT' ||
-        activeElement.tagName === 'TEXTAREA' ||
-        activeElement.getAttribute('contenteditable') === 'true'
-      )) {
+      if (
+        activeElement &&
+        (activeElement.tagName === "INPUT" ||
+          activeElement.tagName === "TEXTAREA" ||
+          activeElement.getAttribute("contenteditable") === "true")
+      ) {
         return;
       }
 
       switch (event.key.toLowerCase()) {
-        case 'd':
+        case "d":
           event.preventDefault();
           goToPreviousWeek();
           break;
-        case 'f':
+        case "f":
           event.preventDefault();
           goToNextWeek();
           break;
-        case 'a':
+        case "a":
           event.preventDefault();
           alignAllTasks();
           break;
-        case 'r':
+        case "r":
           event.preventDefault();
           pickRandomTask();
           break;
-        case 't':
+        case "t":
           event.preventDefault();
           if (event.shiftKey || event.ctrlKey) {
             // Shift+T or Ctrl+T: Go to current week
@@ -365,7 +379,7 @@ export function DragDropTodoList() {
       id: crypto.randomUUID(),
       text: "",
       estimatedHours: 1,
-      status: 'active',
+      status: "active",
       position: { x, y },
       scheduledDate,
       dayOfWeek,
@@ -440,7 +454,7 @@ export function DragDropTodoList() {
       (todo) =>
         todo.scheduledDate &&
         isSameDay(todo.scheduledDate, today) &&
-        todo.status !== 'completed'
+        todo.status !== "completed"
     );
 
     if (todayTasks.length === 0) {
@@ -449,7 +463,7 @@ export function DragDropTodoList() {
         (todo) =>
           todo.scheduledDate &&
           isDateInCurrentWeek(todo.scheduledDate) &&
-          todo.status !== 'completed'
+          todo.status !== "completed"
       );
 
       if (currentWeekTasks.length === 0) return; // No tasks to pick
@@ -534,8 +548,7 @@ export function DragDropTodoList() {
       if (updates.text !== undefined) dbUpdates.text = updates.text;
       if (updates.estimatedHours !== undefined)
         dbUpdates.estimatedHours = updates.estimatedHours;
-      if (updates.status !== undefined)
-        dbUpdates.status = updates.status;
+      if (updates.status !== undefined) dbUpdates.status = updates.status;
       if (updates.dayOfWeek !== undefined)
         dbUpdates.dayOfWeek = updates.dayOfWeek || null;
       if (updates.position !== undefined) {
@@ -608,7 +621,7 @@ export function DragDropTodoList() {
       // Soft delete: update status to 'deleted' instead of actually deleting
       const { error } = await supabase
         .from("todos")
-        .update({ status: 'deleted' })
+        .update({ status: "deleted" })
         .eq("id", id);
       if (error) {
         console.error("Failed to delete todo from database:", error);
@@ -647,7 +660,7 @@ export function DragDropTodoList() {
       id: crypto.randomUUID(),
       text: "",
       estimatedHours: 1,
-      status: 'active',
+      status: "active",
       position: { x, y },
       scheduledDate,
       dayOfWeek, // Keep for backward compatibility
@@ -758,10 +771,58 @@ export function DragDropTodoList() {
       className="h-screen bg-gray-50 overflow-hidden flex flex-col"
       style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
     >
-      {/* Week Navigation Header */}
+      {/* Combined Header with View Switcher and Navigation */}
       <div className="bg-gray-50 py-2 flex justify-center pointer-events-none mb-4">
-        <div className="bg-white border-2 border-gray-200 rounded-lg px-4 py-2 pointer-events-auto">
-          <div className="flex items-center space-x-3">
+        <div className="bg-white border-2 border-gray-200 rounded-lg shadow-sm pointer-events-auto">
+          {/* View Switcher - Top Layer */}
+          <div className="flex items-center px-2 py-2">
+            <button
+              onClick={() => onViewChange?.("todos")}
+              className="flex-1 px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-2 bg-blue-600 text-white z-50 relative min-w-8"
+              title="Weekly Planner"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            >
+              <Calendar className="w-4 h-4 pointer-events-none" />
+              <span className="text-sm font-medium">Weekly Planner</span>
+            </button>
+            <button
+              onClick={() => onViewChange?.("goals")}
+              className="flex-1 px-3 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-2 text-gray-700 hover:bg-gray-50 z-50 relative"
+              title="Goals"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            >
+              <Target className="w-4 h-4 pointer-events-none" />
+              <span className="text-sm font-medium">Goals</span>
+            </button>
+          </div>
+
+          {/* Thin Horizontal Divider */}
+          <div className="h-px bg-gray-300 mx-2"></div>
+
+          {/* Week Navigation - Bottom Layer */}
+          <div className="flex items-center space-x-3 px-4 py-2">
             <button
               onClick={goToPreviousWeek}
               className="p-1 hover:bg-gray-100 rounded-md transition-colors z-50 relative"

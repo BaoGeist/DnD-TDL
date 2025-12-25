@@ -7,4 +7,11 @@ if (!supabaseKey) {
   throw new Error("Missing NEXT_PUBLIC_SUPABASE_KEY environment variable");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    flowType: "pkce",
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    persistSession: true,
+  },
+});
